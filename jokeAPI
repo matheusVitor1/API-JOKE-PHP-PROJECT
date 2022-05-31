@@ -1,0 +1,113 @@
+<?php
+
+
+require_once "vendor/autoload.php";
+
+use GuzzleHttp\Client;
+
+$client = new Client([
+    // Base URI is used with relative requests
+    'base_uri' => 'https://v2.jokeapi.dev',
+    'verify' => false
+]);
+// function to find the word used, in the API 
+function find(Client $client, $search = null)
+{
+    // response receives the client variable concatenated with the parameters used in the request
+    $response = $client->request('GET', '/joke/Any', [
+        'query' => [
+            'category' => '',
+            'type' => 'single',
+            'amount' => '10',
+            'contains' => $search,
+
+        ]
+    ]);
+ // receive HTML body as string
+    $body = $response->getBody();
+// takes as input a string encoded in JSON format and converts it to a PHP variable
+    $arr_body = json_decode($body);
+// checks variables as anything else will result in a parse error
+    if (!isset($arr_body->jokes)) {
+
+        return [];
+    }
+// if there is no error, it will receive the array in area 0
+    return $arr_body->jokes[0];
+};
+
+// variavel search recebe o botão "Search"
+$search = filter_input(INPUT_GET, 'search');
+
+
+$result = find($client, $search);
+
+?>
+
+<style type="text/css">
+    body {
+        background-color: aliceblue;
+    }
+
+    .box-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .box {
+        background: bisque;
+        border-radius: 15px;
+        box-shadow: 3px 10px 15px #abc;
+        display: flex;
+        align-items: center;
+        text-align: center;
+        font-size: 30px;
+        padding: 50px;
+        font-family: monospace;
+        font-weight: bold;
+        position: relative;
+    }
+
+    .tag {
+        position: absolute;
+        top: 0;
+        left: 0;
+        font-size: 15px;
+        background-color: #666;
+        color: #fff;
+    }
+</style>
+
+<h1> Get Random Jokes </h1>
+<form action="index.php" method='get'>
+    JOKE: <input type="text" name="search" placeholder="chose a joke">
+    <button type="submit" name="submit" value="press">
+        Submit
+    </button>
+
+</form>
+
+<?php if (empty($result)) { ?>
+    <p>We not found a Joke...</p>
+<?php } else { ?>
+    <div class="box-container">
+        <div class="box">
+            <div class="box-content">
+
+                <?php if ($result->type == 'single') { ?>
+                    <span><?php echo $result->joke; ?></span>
+                <?php } else { ?>
+                    <span><?php echo $result->setup; ?></span>
+                    <hr>
+                    <span><?php echo $result->delivery; ?></span>
+
+                <?php } ?>
+
+
+            </div>
+        </div>
+    </div>
+
+<?php } ?>
